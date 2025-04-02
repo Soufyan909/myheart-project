@@ -69,28 +69,36 @@ app.get('/api/appointments', verifyToken, async (req, res) => {
 app.post('/api/appointments', verifyToken, async (req, res) => {
   try {
     console.log('Received appointment creation request:', req.body);
-    const { doctorId, patientId, dateTime, reason, status } = req.body;
+    const { doctorId, dateTime, reason, type } = req.body;
     
     // Parse the dateTime string into a Date object
     const appointmentDate = new Date(dateTime);
     
     const appointment = new Appointment({
-      patientId: patientId || req.user.userId,
+      patientId: req.user.userId,
       doctorId,
       date: appointmentDate,
       time: appointmentDate.toLocaleTimeString(),
-      type: 'consultation',
+      type: type || 'consultation',
       notes: reason,
-      status: 'scheduled' // Set initial status to 'scheduled'
+      status: 'scheduled'
     });
 
     console.log('Creating appointment:', appointment);
-    await appointment.save();
-    console.log('Appointment saved successfully:', appointment);
-    res.status(201).json(appointment);
+    const savedAppointment = await appointment.save();
+    console.log('Appointment saved successfully:', savedAppointment);
+    
+    // Return a more detailed response
+    res.status(201).json({
+      message: 'Appointment created successfully',
+      appointment: savedAppointment
+    });
   } catch (error) {
     console.error('Error creating appointment:', error);
-    res.status(500).json({ message: 'Error creating appointment', error: error.message });
+    res.status(500).json({ 
+      message: 'Error creating appointment', 
+      error: error.message 
+    });
   }
 });
 
