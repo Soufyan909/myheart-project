@@ -18,31 +18,66 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Connect to MongoDB
+// Connect to MongoDB with enhanced error handling
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/medical-appointments', {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
-.then(() => console.log('Connected to MongoDB'))
-.catch(err => console.error('MongoDB connection error:', err));
+.then(() => {
+  console.log('Successfully connected to MongoDB');
+  console.log('Database:', mongoose.connection.db.databaseName);
+})
+.catch(err => {
+  console.error('MongoDB connection error:', err);
+  console.error('Connection string used:', process.env.MONGODB_URI || 'mongodb://localhost:27017/medical-appointments');
+  console.error('Full error details:', {
+    name: err.name,
+    message: err.message,
+    stack: err.stack
+  });
+});
+
+// Add MongoDB connection error handler
+mongoose.connection.on('error', (err) => {
+  console.error('MongoDB connection error:', err);
+});
+
+// Add MongoDB disconnection handler
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB disconnected');
+});
+
+// Add MongoDB reconnection handler
+mongoose.connection.on('reconnected', () => {
+  console.log('MongoDB reconnected');
+});
 
 // JWT Secret
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 // Middleware to verify JWT token
 const verifyToken = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
+  console.log('Headers received:', req.headers);
+  const authHeader = req.headers.authorization;
+  console.log('Authorization header:', authHeader);
+  
+  const token = authHeader?.split(' ')[1];
+  console.log('Extracted token:', token);
   
   if (!token) {
+    console.log('No token provided in request');
     return res.status(403).json({ message: 'No token provided' });
   }
 
   try {
+    console.log('Attempting to verify token with secret:', JWT_SECRET);
     const decoded = jwt.verify(token, JWT_SECRET);
+    console.log('Token decoded successfully:', decoded);
     req.user = decoded;
     next();
   } catch (error) {
-    return res.status(401).json({ message: 'Invalid token' });
+    console.error('Token verification failed:', error);
+    return res.status(401).json({ message: 'Invalid token', error: error.message });
   }
 };
 
@@ -50,18 +85,28 @@ const verifyToken = (req, res, next) => {
 // Get all appointments for a user
 app.get('/api/appointments', verifyToken, async (req, res) => {
   try {
-    console.log('Fetching appointments for user:', req.user.userId);
+    console.log('Received request for appointments');
+    console.log('User from token:', req.user);
+    
     const appointments = await Appointment.find({
       $or: [
         { patientId: req.user.userId },
         { doctorId: req.user.userId }
       ]
     });
+    
     console.log('Found appointments:', appointments);
+    console.log('Number of appointments:', appointments.length);
+    
     res.json(appointments);
   } catch (error) {
-    console.error('Error fetching appointments:', error);
-    res.status(500).json({ message: 'Error fetching appointments', error: error.message });
+    console.error('Error in /api/appointments:', error);
+    console.error('Stack trace:', error.stack);
+    res.status(500).json({ 
+      message: 'Error fetching appointments',
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 

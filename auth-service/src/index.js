@@ -2,9 +2,11 @@ const express = require('express');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
+const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
 const User = require('./models/User');
+const MedicalRecord = require('./models/MedicalRecord');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -253,6 +255,139 @@ app.get('/api/auth/patients', verifyToken, async (req, res) => {
 // Verify token
 app.get('/api/auth/verify', verifyToken, (req, res) => {
   res.json({ user: req.user });
+});
+
+// Medical Records Routes
+// Get all medical records for a patient
+app.get('/api/records', verifyToken, async (req, res) => {
+  try {
+    console.log('Fetching medical records for user:', req.user);
+    let records;
+    
+    if (req.user.role === 'patient') {
+      records = await MedicalRecord.find({ patientId: req.user.userId });
+    } else if (req.user.role === 'doctor') {
+      records = await MedicalRecord.find({ doctorId: req.user.userId });
+    } else {
+      return res.status(403).json({ message: 'Unauthorized access to medical records' });
+    }
+
+    // Populate doctor and patient information
+    const populatedRecords = await Promise.all(records.map(async (record) => {
+      const doctor = await User.findById(record.doctorId).select('name email');
+      const patient = await User.findById(record.patientId).select('name email');
+      return {
+        ...record.toObject(),
+        doctor,
+        patient
+      };
+    }));
+
+    res.json(populatedRecords);
+  } catch (error) {
+    console.error('Error fetching medical records:', error);
+    res.status(500).json({ message: 'Error fetching medical records', error: error.message });
+  }
+});
+
+// Get a specific medical record
+app.get('/api/records/:id', verifyToken, async (req, res) => {
+  try {
+    const record = await MedicalRecord.findOne({
+      _id: req.params.id,
+      $or: [
+        { patientId: req.user.userId },
+        { doctorId: req.user.userId }
+      ]
+    });
+
+    if (!record) {
+      return res.status(404).json({ message: 'Medical record not found' });
+    }
+
+    // Populate doctor and patient information
+    const doctor = await User.findById(record.doctorId).select('name email');
+    const patient = await User.findById(record.patientId).select('name email');
+
+    res.json({
+      ...record.toObject(),
+      doctor,
+      patient
+    });
+  } catch (error) {
+    console.error('Error fetching medical record:', error);
+    res.status(500).json({ message: 'Error fetching medical record', error: error.message });
+  }
+});
+
+// Create a new medical record
+app.post('/api/records', verifyToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'doctor') {
+      return res.status(403).json({ message: 'Only doctors can create medical records' });
+    }
+
+    const record = new MedicalRecord({
+      ...req.body,
+      doctorId: req.user.userId
+    });
+
+    await record.save();
+    res.status(201).json(record);
+  } catch (error) {
+    console.error('Error creating medical record:', error);
+    res.status(500).json({ message: 'Error creating medical record', error: error.message });
+  }
+});
+
+// Update a medical record
+app.put('/api/records/:id', verifyToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'doctor') {
+      return res.status(403).json({ message: 'Only doctors can update medical records' });
+    }
+
+    const record = await MedicalRecord.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        doctorId: req.user.userId
+      },
+      req.body,
+      { new: true }
+    );
+
+    if (!record) {
+      return res.status(404).json({ message: 'Medical record not found' });
+    }
+
+    res.json(record);
+  } catch (error) {
+    console.error('Error updating medical record:', error);
+    res.status(500).json({ message: 'Error updating medical record', error: error.message });
+  }
+});
+
+// Delete a medical record
+app.delete('/api/records/:id', verifyToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'doctor') {
+      return res.status(403).json({ message: 'Only doctors can delete medical records' });
+    }
+
+    const record = await MedicalRecord.findOneAndDelete({
+      _id: req.params.id,
+      doctorId: req.user.userId
+    });
+
+    if (!record) {
+      return res.status(404).json({ message: 'Medical record not found' });
+    }
+
+    res.json({ message: 'Medical record deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting medical record:', error);
+    res.status(500).json({ message: 'Error deleting medical record', error: error.message });
+  }
 });
 
 // Health check endpoint
