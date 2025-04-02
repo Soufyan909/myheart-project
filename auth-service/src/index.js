@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 3001;
 
 // CORS configuration
 app.use(cors({
-  origin: ['http://localhost:3004', 'http://localhost:3005'],
+  origin: ['http://localhost:3000', 'http://localhost:3004', 'http://localhost:3005'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   credentials: true
