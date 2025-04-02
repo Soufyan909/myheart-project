@@ -229,7 +229,9 @@ app.post('/api/auth/login', async (req, res) => {
 // Get all doctors
 app.get('/api/auth/doctors', verifyToken, async (req, res) => {
   try {
+    console.log('Fetching doctors. User:', req.user);
     const doctors = await User.find({ role: 'doctor' }).select('-password');
+    console.log('Found doctors:', doctors);
     res.json(doctors);
   } catch (error) {
     console.error('Error fetching doctors:', error);
