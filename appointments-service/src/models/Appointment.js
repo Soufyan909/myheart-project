@@ -2,11 +2,13 @@ const mongoose = require('mongoose');
 
 const appointmentSchema = new mongoose.Schema({
   patientId: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
     required: true
   },
   doctorId: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
     required: true
   },
   date: {
@@ -19,23 +21,28 @@ const appointmentSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['scheduled', 'completed', 'cancelled', 'pending'],
+    enum: ['scheduled', 'completed', 'cancelled'],
     default: 'scheduled'
   },
   type: {
     type: String,
-    required: true,
-    default: 'consultation',
-    trim: true
+    required: true
   },
   notes: {
-    type: String,
-    trim: true
+    type: String
   },
-  createdAt: {
-    type: Date,
-    default: Date.now
+  cancelReason: {
+    type: String
+  },
+  cancelledAt: {
+    type: Date
+  },
+  cancelledBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
   }
+}, {
+  timestamps: true
 });
 
 // Add indexes for better query performance

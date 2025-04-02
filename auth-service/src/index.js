@@ -390,6 +390,51 @@ app.delete('/api/records/:id', verifyToken, async (req, res) => {
   }
 });
 
+// Update user profile
+app.put('/api/auth/profile', verifyToken, async (req, res) => {
+  try {
+    const { userId } = req.user;
+    const {
+      name,
+      phone,
+      dateOfBirth,
+      emailNotifications,
+      smsNotifications
+    } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Update user fields
+    if (name) user.name = name;
+    if (phone) user.phone = phone;
+    if (dateOfBirth) user.dateOfBirth = dateOfBirth;
+    if (emailNotifications !== undefined) user.emailNotifications = emailNotifications;
+    if (smsNotifications !== undefined) user.smsNotifications = smsNotifications;
+
+    await user.save();
+
+    // Return user without password
+    const userResponse = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      phone: user.phone,
+      dateOfBirth: user.dateOfBirth,
+      emailNotifications: user.emailNotifications,
+      smsNotifications: user.smsNotifications
+    };
+
+    res.json(userResponse);
+  } catch (error) {
+    console.error('Profile update error:', error);
+    res.status(500).json({ message: 'Error updating profile' });
+  }
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', message: 'Auth Service is running' });

@@ -197,6 +197,57 @@ app.delete('/api/appointments/:id', verifyToken, async (req, res) => {
   }
 });
 
+// Cancel appointment
+app.put('/appointments/:id/cancel', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+    
+    const appointment = await Appointment.findById(id);
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found' });
+    }
+
+    // Check if the user has permission to cancel this appointment
+    if (appointment.patientId.toString() !== req.user.userId && 
+        appointment.doctorId.toString() !== req.user.userId) {
+      return res.status(403).json({ message: 'Not authorized to cancel this appointment' });
+    }
+
+    // Check if appointment is already cancelled
+    if (appointment.status === 'cancelled') {
+      return res.status(400).json({ message: 'Appointment is already cancelled' });
+    }
+
+    // Check if appointment is in the past
+    if (new Date(appointment.date) < new Date()) {
+      return res.status(400).json({ message: 'Cannot cancel past appointments' });
+    }
+
+    appointment.status = 'cancelled';
+    appointment.cancelReason = reason;
+    appointment.cancelledAt = new Date();
+    appointment.cancelledBy = req.user.userId;
+
+    await appointment.save();
+
+    // Return the updated appointment
+    res.json({
+      message: 'Appointment cancelled successfully',
+      appointment: {
+        id: appointment._id,
+        status: appointment.status,
+        cancelReason: appointment.cancelReason,
+        cancelledAt: appointment.cancelledAt,
+        cancelledBy: appointment.cancelledBy
+      }
+    });
+  } catch (error) {
+    console.error('Error cancelling appointment:', error);
+    res.status(500).json({ message: 'Error cancelling appointment' });
+  }
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', message: 'Appointments Service is running' });

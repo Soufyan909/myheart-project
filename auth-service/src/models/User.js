@@ -23,6 +23,24 @@ const userSchema = new mongoose.Schema({
     required: true,
     enum: ['patient', 'doctor'],
     default: 'patient'
+  },
+  phone: {
+    type: String,
+    trim: true
+  },
+  dateOfBirth: {
+    type: Date
+  },
+  emailNotifications: {
+    type: Boolean,
+    default: true
+  },
+  smsNotifications: {
+    type: Boolean,
+    default: false
+  },
+  lastLogin: {
+    type: Date
   }
 }, {
   timestamps: true
