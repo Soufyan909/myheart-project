@@ -91,7 +91,7 @@ const Dashboard = () => {
 
   const fetchDoctors = async () => {
     try {
-      const response = await axios.get('/api/doctors');
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/doctors`);
       console.log('Doctors response:', response.data);
       setDoctors(response.data);
     } catch (error) {
