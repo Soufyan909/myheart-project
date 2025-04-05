@@ -57,27 +57,18 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 // Middleware to verify JWT token
 const verifyToken = (req, res, next) => {
-  console.log('Headers received:', req.headers);
-  const authHeader = req.headers.authorization;
-  console.log('Authorization header:', authHeader);
-  
-  const token = authHeader?.split(' ')[1];
-  console.log('Extracted token:', token);
+  const token = req.headers.authorization?.split(' ')[1];
   
   if (!token) {
-    console.log('No token provided in request');
     return res.status(403).json({ message: 'No token provided' });
   }
 
   try {
-    console.log('Attempting to verify token with secret:', JWT_SECRET);
     const decoded = jwt.verify(token, JWT_SECRET);
-    console.log('Token decoded successfully:', decoded);
     req.user = decoded;
     next();
   } catch (error) {
-    console.error('Token verification failed:', error);
-    return res.status(401).json({ message: 'Invalid token', error: error.message });
+    return res.status(401).json({ message: 'Invalid token' });
   }
 };
 

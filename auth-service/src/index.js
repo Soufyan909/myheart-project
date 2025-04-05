@@ -158,34 +158,24 @@ app.post('/api/auth/register', async (req, res) => {
 // Login
 app.post('/api/auth/login', async (req, res) => {
   try {
-    console.log('Login request received:', req.body);
     const { email, password } = req.body;
 
     // Validate required fields
     if (!email || !password) {
-      console.log('Missing login credentials');
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
     // Find user
-    console.log('Finding user with email:', email);
     const user = await User.findOne({ email });
     if (!user) {
-      console.log('User not found:', email);
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     // Check password
-    console.log('Checking password for user:', email);
     const isValidPassword = await user.comparePassword(password);
-    console.log('Password validation result:', isValidPassword);
-
     if (!isValidPassword) {
-      console.log('Invalid password for user:', email);
       return res.status(401).json({ message: 'Invalid credentials' });
     }
-
-    console.log('Login successful for user:', email);
 
     // Generate token
     const token = jwt.sign(
@@ -205,25 +195,10 @@ app.post('/api/auth/login', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Login error:', error);
-    console.error('Error details:', {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
-    });
-    
-    // Check if it's a MongoDB connection error
-    if (error.name === 'MongoServerSelectionError') {
-      return res.status(503).json({
-        message: 'Database connection error. Please try again later.',
-        error: 'Database service unavailable'
-      });
-    }
-
+    console.error('Login error:', error.message);
     res.status(500).json({ 
       message: 'Error logging in',
-      error: error.message,
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
     });
   }
 });

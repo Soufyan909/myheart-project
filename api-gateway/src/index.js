@@ -34,8 +34,8 @@ const authProxy = createProxyMiddleware({
     }
   },
   onError: (err, req, res) => {
-    console.error('Auth Service Proxy Error:', err);
-    res.status(500).json({ message: 'Internal Server Error', error: err.message });
+    console.error('Auth Service Proxy Error');
+    res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 
@@ -53,12 +53,9 @@ const appointmentsProxy = createProxyMiddleware({
       proxyReq.write(bodyData);
     }
   },
-  onProxyRes: (proxyRes, req, res) => {
-    console.log('Appointments Service Response:', proxyRes.statusCode);
-  },
   onError: (err, req, res) => {
-    console.error('Appointments Service Proxy Error:', err);
-    res.status(500).json({ message: 'Internal Server Error', error: err.message });
+    console.error('Appointments Service Proxy Error');
+    res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 
@@ -77,8 +74,8 @@ const recordsProxy = createProxyMiddleware({
     }
   },
   onError: (err, req, res) => {
-    console.error('Records Service Proxy Error:', err);
-    res.status(500).json({ message: 'Internal Server Error', error: err.message });
+    console.error('Records Service Proxy Error');
+    res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 
