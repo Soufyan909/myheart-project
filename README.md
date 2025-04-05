@@ -38,6 +38,7 @@ A full-stack healthcare management system built with React and Node.js using a m
 - Node.js
 - MongoDB
 - npm or yarn
+- Docker (optional)
 
 ### Installation
 
@@ -88,6 +89,13 @@ JWT_SECRET=your_jwt_secret
 ```
 
 4. Start the services:
+
+Using Docker:
+```bash
+docker-compose up --build
+```
+
+Or without Docker:
 ```bash
 # From the project root
 ./start.sh
@@ -95,7 +103,7 @@ JWT_SECRET=your_jwt_secret
 
 ## Usage
 
-1. Access the application at http://localhost:3004
+1. Access the application at http://localhost:3000
 2. Register as a doctor or patient
 3. Login to access the dashboard
 4. Manage appointments and medical records
@@ -110,4 +118,4 @@ JWT_SECRET=your_jwt_secret
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+This project is licensed under the MIT License - see the LICENSE file for details.
